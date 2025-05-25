@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RR : 이동하는 기록자들</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <style>
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; height: 100%; font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif; }
+    .start-screen { display: flex; align-items: center; justify-content: center; height: 100%; background-color: #f9f9f9; cursor: pointer; }
+    .start-screen h1 { font-size: 10rem; font-weight: bold; margin: 0; }
+    .app { display: none; height: 100%; flex-direction: row; }
+    .sidebar { width: 200px; background-color: #111; color: white; padding: 20px; display: flex; flex-direction: column; }
+    .sidebar h2 { font-size: 1.2rem; margin: 10px 0; cursor: pointer; }
+    .sidebar h2:hover { color: #aaa; }
+    .main-content { flex: 1; display: flex; flex-direction: column; height: 100%; }
+    #map { flex: 1; width: 100%; z-index: 0; }
+    #essay-section { display: none; flex: 1; padding: 20px; overflow-y: auto; }
+    #essay-section textarea { width: 100%; height: 150px; font-size: 1rem; padding: 10px; }
+    #essay-section input[type="file"] { margin-top: 10px; }
+    #essay-section img { max-width: 100%; margin-top: 10px; }
+    #essay-section button { margin-top: 10px; padding: 10px 20px; font-size: 1rem; cursor: pointer; }
+    .saved-message { margin-top: 10px; color: green; display: none; }
+    .post, .comment { border-top: 1px solid #ccc; padding: 10px 0; }
+    .admin-section { margin-top: 20px; display: none; }
+  </style>
+</head>
+<body>
+  <div class="start-screen" onclick="startApp()">
+    <h1>RR</h1>
+  </div>
+  <div class="app">
+    <div class="sidebar">
+      <h2 onclick="showSection('map')">map</h2>
+      <h2 onclick="alert('how we start 섹션 준비 중')">how we start</h2>
+      <h2 onclick="alert('who 섹션 준비 중')">who</h2>
+      <h2 onclick="alert('contact 섹션 준비 중')">contact</h2>
+    </div>
+    <div class="main-content">
+      <div id="map"></div>
+      <div id="essay-section">
+        <h2>서울 시립미술관에서의 기록</h2>
+        <div id="post-container"></div>
+        <textarea id="textArea" placeholder="여기에 글을 작성하세요..."></textarea><br>
+        <input type="file" accept="image/*" id="imageUpload" onchange="previewImage(event)"><br>
+        <img id="preview" style="display:none;">
+        <button onclick="saveText()">댓글 달기</button>
+        <div class="saved-message" id="savedMessage">✅ 저장되었습니다!</div>
+
+        <div class="admin-section" id="adminSection">
+          <h3>관리자 모드</h3>
+          <button onclick="clearPosts()">전체 삭제</button>
+        </div>
+        <div>
+          <input id="adminId" placeholder="관리자 ID">
+          <input id="adminPw" type="password" placeholder="비밀번호">
+          <button onclick="loginAdmin()">로그인</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script>
+    let map;
+
+    function startApp() {
+      document.querySelector('.start-screen').style.display = 'none';
+      document.querySelector('.app').style.display = 'flex';
+      initializeMap();
+    }
+
+    function initializeMap() {
+      map = L.map('map').setView([20, 0], 2);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 18,
+        attribution: '&copy; OpenStreetMap contributors'
+      }).addTo(map);
+      const marker = L.marker([37.5665, 126.9780]).addTo(map);
+      marker.on('click', function () {
+        document.getElementById('map').style.display = 'none';
+        document.getElementById('essay-section').style.display = 'block';
+        loadPosts();
+      });
+    }
+
+    function showSection(section) {
+      if (section === 'map') {
+        document.getElementById('map').style.display = 'block';
+        document.getElementById('essay-section').style.display = 'none';
+        if (map) map.invalidateSize();
+      }
+    }
+
+    function saveText() {
+      const text = document.getElementById("textArea").value;
+      const image = document.getElementById("preview").src || '';
+      if (!text.trim()) return;
+      const posts = JSON.parse(localStorage.getItem("rr_posts") || "[]");
+      posts.unshift({ text, image });
+      localStorage.setItem("rr_posts", JSON.stringify(posts));
+      document.getElementById("textArea").value = '';
+      document.getElementById("preview").style.display = 'none';
+      document.getElementById("savedMessage").style.display = 'block';
+      loadPosts();
+    }
+
+    function previewImage(event) {
+      const reader = new FileReader();
+      reader.onload = function () {
+        const img = document.getElementById("preview");
+        img.src = reader.result;
+        img.style.display = 'block';
+      };
+      reader.readAsDataURL(event.target.files[0]);
+    }
+
+    function loadPosts() {
+      const container = document.getElementById("post-container");
+      container.innerHTML = '';
+      const posts = JSON.parse(localStorage.getItem("rr_posts") || "[]");
+      posts.forEach(post => {
+        const div = document.createElement('div');
+        div.className = 'post';
+        div.innerHTML = `<p>${post.text}</p>` + (post.image ? `<img src="${post.image}">` : '');
+        container.appendChild(div);
+      });
+    }
+
+    function loginAdmin() {
+      const id = document.getElementById("adminId").value;
+      const pw = document.getElementById("adminPw").value;
+      if (id === "apple" && pw === "123123123") {
+        document.getElementById("adminSection").style.display = 'block';
+        alert("관리자 로그인 성공");
+      } else {
+        alert("로그인 실패");
+      }
+    }
+
+    function clearPosts() {
+      if (confirm("정말 모든 글을 삭제하시겠습니까?")) {
+        localStorage.removeItem("rr_posts");
+        loadPosts();
+      }
+    }
+  </script>
+</body>
+</html>
