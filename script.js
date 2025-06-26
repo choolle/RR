@@ -1,39 +1,33 @@
-// 🔧 본인의 firebaseConfig 값으로 교체
 const firebaseConfig = {
-  apiKey: "YOUR_FIREBASE_API_KEY",
-  authDomain: "your-project-id.firebaseapp.com",
-  projectId: "your-project-id",
-  storageBucket: "your-project-id.appspot.com",
-  messagingSenderId: "xxxxxxx",
-  appId: "xxxxxxxxxxxxxxxx"
+  apiKey: "AIzaSyDra5G2BsIKm3UdP4uLO0mq46UY5fGKAPU",
+  authDomain: "rolling-records-90b45.firebaseapp.com",
+  projectId: "rolling-records-90b45",
+  storageBucket: "rolling-records-90b45.firebasestorage.app",
+  messagingSenderId: "693337006685",
+  appId: "1:693337006685:web:ce13aac3dedf5a7f56a3b4",
+  measurementId: "G-3GZ477R8DV"
 };
 
-// Firebase 초기화
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 const storage = firebase.storage();
 
-let map; // 지도 전역 변수
-
-// 지도 초기화 함수
+let map;
 function initMap() {
   map = new google.maps.Map(document.getElementById("map"), {
-    center: { lat: 37.5665, lng: 126.9780 }, // 서울 중심
+    center: { lat: 37.5665, lng: 126.9780 },
     zoom: 2,
     gestureHandling: "greedy",
   });
 
-  // 지도 클릭 시 폼에 위도/경도 입력
   map.addListener("click", (event) => {
     document.getElementById("lat").value = event.latLng.lat().toFixed(6);
     document.getElementById("lng").value = event.latLng.lng().toFixed(6);
   });
 
-  // 저장된 기록 불러오기
   loadMarkers();
 }
 
-// 기록 폼 전송 처리
 document.getElementById("recordForm").addEventListener("submit", async (e) => {
   e.preventDefault();
   const lat = parseFloat(document.getElementById("lat").value);
@@ -58,19 +52,18 @@ document.getElementById("recordForm").addEventListener("submit", async (e) => {
 
     await db.collection("records").add({
       lat, lng, author, memo, photoURL,
-      timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+      timestamp: firebase.firestore.FieldValue.serverTimestamp()
     });
 
     alert("기록이 저장되었습니다!");
     document.getElementById("recordForm").reset();
-    loadMarkers(); // 마커 다시 불러오기
+    loadMarkers();
   } catch (err) {
     console.error("저장 실패:", err);
-    alert("에러 발생! 콘솔 확인");
+    alert("에러가 발생했습니다. 콘솔을 확인해주세요.");
   }
 });
 
-// 저장된 기록 마커로 불러오기
 async function loadMarkers() {
   const snapshot = await db.collection("records").orderBy("timestamp", "desc").get();
   snapshot.forEach((doc) => {
@@ -78,7 +71,7 @@ async function loadMarkers() {
     const marker = new google.maps.Marker({
       position: { lat: data.lat, lng: data.lng },
       map: map,
-      title: data.author,
+      title: data.author
     });
 
     const content = `
@@ -86,10 +79,10 @@ async function loadMarkers() {
       ${data.memo.replace(/\n/g, "<br/>")}<br/>
       ${data.photoURL ? `<img src="${data.photoURL}" width="150"/>` : ""}
     `;
-    const infowindow = new google.maps.InfoWindow({ content });
+    const info = new google.maps.InfoWindow({ content });
 
     marker.addListener("click", () => {
-      infowindow.open(map, marker);
+      info.open(map, marker);
     });
   });
 }
