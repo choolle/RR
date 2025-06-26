@@ -64,7 +64,7 @@
     </section>
   </main>
 
-  <! AIzaSyCqG7xxG2-xDW1u84zPK46ZIsDtnoW0JBA>
+  <!-- 🗺️ Google Maps API (당신의 API 키 포함됨) -->
   <script
     src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCqG7xxG2-xDW1u84zPK46ZIsDtnoW0JBA&callback=initMap"
     async
@@ -83,29 +83,29 @@
       });
     });
 
-    // 지도 표시
+    // 지도 초기화
     let map;
     function initMap() {
       map = new google.maps.Map(document.getElementById("map"), {
         center: { lat: 37.5665, lng: 126.978 }, // 서울
         zoom: 2,
-        gestureHandling: "greedy", // 드래그/휠 가능
+        gestureHandling: "greedy",
       });
 
-      // 지도 클릭 시 위도 경도 폼에 입력
+      // 지도 클릭 시 위도/경도 자동 입력
       map.addListener("click", (event) => {
         document.getElementById("lat").value = event.latLng.lat().toFixed(6);
         document.getElementById("lng").value = event.latLng.lng().toFixed(6);
       });
     }
   </script>
-  <!-- Firebase SDK 먼저 불러온 후 -->
-<script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-storage.js"></script>
 
-<!-- 마지막에 script.js 연결 -->
-<script src="script.js"></script>
+  <!-- 🔥 Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-storage.js"></script>
 
+  <!-- 📦 Firebase 연동용 스크립트 -->
+  <script src="script.js"></script>
 </body>
 </html>
