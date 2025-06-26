@@ -2,142 +2,101 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>RR : 이동하는 기록자들</title>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <title>이동하는 기록자들</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
-    body, html { margin: 0; padding: 0; font-family: sans-serif; }
-    #menu { display: flex; background: #222; color: white; }
-    #menu button {
-      flex: 1;
-      background: #222;
+    body {
+      margin: 0;
+      font-family: sans-serif;
+    }
+
+    nav {
+      background-color: #333;
       color: white;
+      padding: 10px;
+      display: flex;
+      gap: 10px;
+    }
+
+    nav button {
+      background: none;
       border: none;
-      padding: 1em;
+      color: white;
+      font-size: 16px;
       cursor: pointer;
     }
-    #menu button:hover {
-      background: #444;
+
+    section {
+      padding: 20px;
     }
-    .tab { display: none; padding: 1em; }
-    #map { height: 70vh; }
-    input, textarea { width: 100%; margin: 8px 0; padding: 8px; }
-    button.save { margin-top: 10px; padding: 10px; width: 100%; }
+
+    section:not(.active) {
+      display: none;
+    }
+
+    #map {
+      width: 100%;
+      height: 90vh;
+    }
   </style>
 </head>
 <body>
-  <div id="menu">
-    <button onclick="showTab('map')">🗘 지도</button>
-    <button onclick="showTab('record')">✍ 기록 남기기</button>
-    <button onclick="showTab('about')">ℹ 소개</button>
-  </div>
+  <nav>
+    <button data-target="mapSection">지도 보기</button>
+    <button data-target="formSection">기록 남기기</button>
+  </nav>
 
-  <div id="tab-map" class="tab">
-    <div id="map"></div>
-  </div>
-//
-  <div id="tab-record" class="tab">
-    <h2>기록 남기기</h2>
-    <input id="record-lat" type="number" step="any" placeholder="위도(latitude)">
-    <input id="record-lng" type="number" step="any" placeholder="경도(longitude)">
-    <input id="record-author" type="text" placeholder="작성자">
-    <input id="record-password" type="password" placeholder="관리자 암호">
-    <textarea id="record-text" placeholder="기록 내용"></textarea>
-    <button class="save" onclick="saveRecord()">기록 저장</button>
-  </div>
+  <main>
+    <section id="mapSection" class="active">
+      <div id="map"></div>
+    </section>
 
-  <div id="tab-about" class="tab">
-    <h2>Rolling Records Club</h2>
-    <p>이 프로젝트는 장소와 시간을 따라 이동하며 기록하는 사람들의 흘적을 모운다. 각자가 남기는 기록은 지도의 한 점이 되어 하나의 풍경을 이름다.</p>
-  </div>
+    <section id="formSection">
+      <form id="recordForm">
+        <label>위도: <input type="text" id="lat" required /></label><br />
+        <label>경도: <input type="text" id="lng" required /></label><br />
+        <label>작성자: <input type="text" id="author" required /></label><br />
+        <label>메모: <textarea id="memo" required></textarea></label><br />
+        <label>사진: <input type="file" id="photo" /></label><br />
+        <label>관리자 암호: <input type="password" id="password" required /></label><br />
+        <button type="submit">업로드</button>
+      </form>
+    </section>
+  </main>
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-    import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+  <! AIzaSyCqG7xxG2-xDW1u84zPK46ZIsDtnoW0JBA>
+  <script
+    src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&callback=initMap"
+    async
+    defer
+  ></script>
 
-    const firebaseConfig = { /* same config as before */ };
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-    let map;
-
-    document.addEventListener("DOMContentLoaded", async () => {
-      showTab('map');
-      map = L.map('map').setView([37.5665, 126.9780], 13);
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; OpenStreetMap contributors'
-      }).addTo(map);
-      await loadRecords();
+  <script>
+    // 탭 전환
+    document.querySelectorAll("nav button").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll("section").forEach((sec) =>
+          sec.classList.remove("active")
+        );
+        const target = btn.getAttribute("data-target");
+        document.getElementById(target).classList.add("active");
+      });
     });
 
-    async function loadRecords() {
-      const querySnapshot = await getDocs(collection(db, "records"));
-      let latSum = 0, lngSum = 0, count = 0;
-      querySnapshot.forEach((docSnap) => {
-        const data = docSnap.data();
-        const { lat, lng, author, text } = data;
-        latSum += lat; lngSum += lng; count++;
-
-        const marker = L.marker([lat, lng]).addTo(map);
-        marker.bindPopup(`
-          <b>${author}</b><br>${text}<br>
-          <button onclick="editRecord('${docSnap.id}')">✏ 수정</button>
-          <button onclick="deleteRecord('${docSnap.id}')">🔒 삭제</button>
-        `);
+    // 지도 표시
+    let map;
+    function initMap() {
+      map = new google.maps.Map(document.getElementById("map"), {
+        center: { lat: 37.5665, lng: 126.978 }, // 서울
+        zoom: 2,
+        gestureHandling: "greedy", // 드래그/휠 가능
       });
-      if (count > 0) {
-        map.setView([latSum / count, lngSum / count], 13);
-      }
-    }
 
-    window.saveRecord = async function () {
-      const lat = parseFloat(document.getElementById("record-lat").value);
-      const lng = parseFloat(document.getElementById("record-lng").value);
-      const author = document.getElementById("record-author").value;
-      const text = document.getElementById("record-text").value;
-      const password = document.getElementById("record-password").value;
-
-      if (password !== "okayokay") {
-        alert("관리자 암호가 맞지 않습니다.");
-        return;
-      }
-      if (isNaN(lat) || isNaN(lng) || !author.trim() || !text.trim()) {
-        alert("모든 필드를 입력해주세요.");
-        return;
-      }
-      await addDoc(collection(db, "records"), { lat, lng, author, text });
-      alert("기록이 저장되었습니다!");
-      location.reload();
-    }
-
-    window.deleteRecord = async function (id) {
-      const input = prompt("삭제하려면 관리자 암호를 입력해주세요:");
-      if (input === "okayokay") {
-        await deleteDoc(doc(db, "records", id));
-        alert("삭제 완료!");
-        location.reload();
-      } else {
-        alert("암호 잘못!");
-      }
-    }
-
-    window.editRecord = async function (id) {
-      const input = prompt("수정하려면 관리자 암호를 입력해주세요:");
-      if (input === "okayokay") {
-        const newText = prompt("수정할 기록 내용을 입력해주세요:");
-        if (newText && newText.trim()) {
-          await updateDoc(doc(db, "records", id), { text: newText });
-          alert("수정 완료!");
-          location.reload();
-        }
-      } else {
-        alert("암호 잘못!");
-      }
-    }
-
-    window.showTab = function(tabName) {
-      document.querySelectorAll('.tab').forEach(el => el.style.display = 'none');
-      document.getElementById(`tab-${tabName}`).style.display = 'block';
+      // 지도 클릭 시 위도 경도 폼에 입력
+      map.addListener("click", (event) => {
+        document.getElementById("lat").value = event.latLng.lat().toFixed(6);
+        document.getElementById("lng").value = event.latLng.lng().toFixed(6);
+      });
     }
   </script>
 </body>
