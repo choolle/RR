@@ -6,225 +6,88 @@
   <title>RR : 이동하는 기록자들</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <style>
-    * { box-sizing: border-box; }
-    html, body { margin: 0; padding: 0; height: 100%; font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif; }
-    .start-screen { display: flex; align-items: center; justify-content: center; height: 100%; background-color: #f9f9f9; cursor: pointer; }
-    .start-screen h1 { font-size: 10rem; font-weight: bold; margin: 0; }
-    .app { display: none; height: 100%; flex-direction: row; }
-    .sidebar { width: 200px; background-color: #111; color: white; padding: 20px; display: flex; flex-direction: column; }
-    .sidebar h2 { font-size: 1.2rem; margin: 10px 0; cursor: pointer; }
-    .sidebar h2:hover { color: #aaa; }
-    .main-content { flex: 1; display: flex; flex-direction: column; height: 100%; }
-    #map { flex: 1; width: 100%; z-index: 0; }
-    #essay-section, #record-form { display: none; flex: 1; padding: 20px; overflow-y: auto; }
-    #essay-section textarea, #record-form textarea { width: 100%; height: 150px; font-size: 1rem; padding: 10px; }
-    #essay-section input[type="file"], #record-form input[type="file"] { margin-top: 10px; }
-    #essay-section img, #record-form img { max-width: 100%; margin-top: 10px; }
-    #essay-section button, #record-form button { margin-top: 10px; padding: 10px 20px; font-size: 1rem; cursor: pointer; }
-    .saved-message { margin-top: 10px; color: green; display: none; }
-    .post, .comment { border-top: 1px solid #ccc; padding: 10px 0; }
-    .admin-section { margin-top: 20px; display: none; }
-    #record-form input, #record-form textarea { width: 100%; padding: 8px; margin-bottom: 10px; }
-  </style>
-</head>
-<body>
-  <div class="start-screen" onclick="startApp()">
-    <h1>RR</h1>
-  </div>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-  <div class="app">
-    <div class="sidebar">
-      <h2 onclick="showSection('map')">map</h2>
-      <h2 onclick="showRecordForm()">records</h2>
-      <h2 onclick="alert('how we start 섹션 준비 중')">how we start</h2>
-      <h2 onclick="alert('who 섹션 준비 중')">who</h2>
-      <h2 onclick="alert('contact 섹션 준비 중')">contact</h2>
-    </div>
+    const firebaseConfig = {
+      apiKey: "AIzaSyCFcqsZwi03uv7wNlrHSVV36AHFwCm1CPo",
+      authDomain: "rolling-records-club.firebaseapp.com",
+      projectId: "rolling-records-club",
+      storageBucket: "rolling-records-club.firebasestorage.app",
+      messagingSenderId: "363521273152",
+      appId: "1:363521273152:web:cad7f1e7ccf448c26d9ea5",
+      measurementId: "G-GGSSWMHMD1"
+    };
 
-    <div class="main-content">
-      <div id="map"></div>
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
 
-      <div id="essay-section">
-        <div id="post-container"></div>
-        <textarea id="textArea" placeholder="여기에 글을 작성하세요..."></textarea><br>
-        <input type="file" accept="image/*" id="imageUpload" onchange="previewImage(event)"><br>
-        <img id="preview" style="display:none;">
-        <button onclick="saveText()">댓글 달기</button>
-        <div class="saved-message" id="savedMessage">✅ 저장되었습니다!</div>
-
-        <div class="admin-section" id="adminSection">
-          <h3>관리자 모드</h3>
-          <button onclick="clearPosts()">전체 삭제</button>
-        </div>
-        <div>
-          <input id="adminId" placeholder="관리자 ID">
-          <input id="adminPw" type="password" placeholder="비밀번호">
-          <button onclick="loginAdmin()">로그인</button>
-        </div>
-      </div>
-
-      <div id="record-form">
-        <h2>새 기록 추가하기</h2>
-        <input id="record-lat" type="number" step="any" placeholder="위도(latitude)">
-        <input id="record-lng" type="number" step="any" placeholder="경도(longitude)">
-        <input id="record-author" type="text" placeholder="작성자 이름">
-        <textarea id="record-text" placeholder="기록 내용을 작성하세요..."></textarea>
-        <input type="file" accept="image/*" id="record-image" onchange="previewRecordImage(event)">
-        <img id="record-preview" style="display:none;">
-        <button onclick="saveRecord()">저장하기</button>
-        <div class="saved-message" id="recordSavedMessage">✅ 기록이 저장되었습니다!</div>
-      </div>
-    </div>
-  </div>
-
-  <script>
     let map;
 
-    function startApp() {
-      document.querySelector('.start-screen').style.display = 'none';
-      document.querySelector('.app').style.display = 'flex';
-      initializeMap();
-    }
-
-    function initializeMap() {
-      map = L.map('map').setView([20, 0], 2);
+    document.addEventListener("DOMContentLoaded", async () => {
+      map = L.map('map').setView([37.5665, 126.9780], 13);
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        maxZoom: 18,
         attribution: '&copy; OpenStreetMap contributors'
       }).addTo(map);
 
-      const marker = L.marker([37.5665, 126.9780]).addTo(map);
-      marker.on('click', function () {
-        document.getElementById('map').style.display = 'none';
-        document.getElementById('essay-section').style.display = 'block';
-        document.getElementById('record-form').style.display = 'none';
-        loadPosts();
+      await loadRecords();
+    });
+
+    async function loadRecords() {
+      const querySnapshot = await getDocs(collection(db, "records"));
+      let latSum = 0, lngSum = 0, count = 0;
+
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        const { lat, lng, author, text } = data;
+        latSum += lat; lngSum += lng; count++;
+
+        const marker = L.marker([lat, lng]).addTo(map);
+        marker.bindPopup(`<b>${author}</b><br>${text}`);
       });
 
-      loadExistingMarkers();
-    }
-
-    function showSection(section) {
-      document.getElementById('map').style.display = (section === 'map') ? 'block' : 'none';
-      document.getElementById('essay-section').style.display = 'none';
-      document.getElementById('record-form').style.display = 'none';
-      if (section === 'map' && map) map.invalidateSize();
-    }
-
-    function showRecordForm() {
-      document.getElementById('map').style.display = 'none';
-      document.getElementById('essay-section').style.display = 'none';
-      document.getElementById('record-form').style.display = 'block';
-    }
-
-    function previewImage(event) {
-      const reader = new FileReader();
-      reader.onload = function () {
-        const img = document.getElementById("preview");
-        img.src = reader.result;
-        img.style.display = 'block';
-      };
-      reader.readAsDataURL(event.target.files[0]);
-    }
-
-    function saveText() {
-      const text = document.getElementById("textArea").value;
-      const image = document.getElementById("preview").src || '';
-      if (!text.trim()) return;
-      const posts = JSON.parse(localStorage.getItem("rr_posts") || "[]");
-      posts.unshift({ text, image });
-      localStorage.setItem("rr_posts", JSON.stringify(posts));
-      document.getElementById("textArea").value = '';
-      document.getElementById("preview").style.display = 'none';
-      document.getElementById("savedMessage").style.display = 'block';
-      loadPosts();
-    }
-
-    function loadPosts() {
-      const container = document.getElementById("post-container");
-      container.innerHTML = '';
-      const posts = JSON.parse(localStorage.getItem("rr_posts") || "[]");
-      posts.forEach(post => {
-        const div = document.createElement('div');
-        div.className = 'post';
-        div.innerHTML = `<p>${post.text}</p>` + (post.image ? `<img src="${post.image}">` : '');
-        container.appendChild(div);
-      });
-    }
-
-    function loginAdmin() {
-      const id = document.getElementById("adminId").value;
-      const pw = document.getElementById("adminPw").value;
-      if (id === "apple" && pw === "123123123") {
-        document.getElementById("adminSection").style.display = 'block';
-        alert("관리자 로그인 성공");
-      } else {
-        alert("로그인 실패");
+      if (count > 0) {
+        map.setView([latSum / count, lngSum / count], 13);
       }
     }
 
-    function clearPosts() {
-      if (confirm("정말 모든 글을 삭제하시겠습니까?")) {
-        localStorage.removeItem("rr_posts");
-        loadPosts();
-      }
-    }
-
-    function previewRecordImage(event) {
-      const reader = new FileReader();
-      reader.onload = function () {
-        const img = document.getElementById("record-preview");
-        img.src = reader.result;
-        img.style.display = 'block';
-      };
-      reader.readAsDataURL(event.target.files[0]);
-    }
-
-    function saveRecord() {
+    window.saveRecord = async function () {
       const lat = parseFloat(document.getElementById("record-lat").value);
       const lng = parseFloat(document.getElementById("record-lng").value);
       const author = document.getElementById("record-author").value;
       const text = document.getElementById("record-text").value;
-      const image = document.getElementById("record-preview").src || '';
 
       if (isNaN(lat) || isNaN(lng) || !author.trim() || !text.trim()) {
         alert("모든 필드를 입력해주세요.");
         return;
       }
 
-      const records = JSON.parse(localStorage.getItem("rr_records") || "[]");
-      records.push({ lat, lng, author, text, image });
-      localStorage.setItem("rr_records", JSON.stringify(records));
-
-      document.getElementById("recordSavedMessage").style.display = 'block';
-      document.getElementById("record-form").reset();
-      document.getElementById("record-preview").style.display = 'none';
-
-      if (map) addMarkerToMap(lat, lng, author, text, image);
-    }
-
-    function addMarkerToMap(lat, lng, author, text, image) {
-      const marker = L.marker([lat, lng]).addTo(map);
-      marker.on('click', function () {
-        document.getElementById('map').style.display = 'none';
-        document.getElementById('essay-section').style.display = 'block';
-        document.getElementById('record-form').style.display = 'none';
-        const container = document.getElementById("post-container");
-        container.innerHTML = '';
-        const div = document.createElement('div');
-        div.className = 'post';
-        div.innerHTML = `<h3>${author}</h3><p>${text}</p>` + (image ? `<img src="${image}">` : '');
-        container.appendChild(div);
+      await addDoc(collection(db, "records"), {
+        lat, lng, author, text
       });
-    }
 
-    function loadExistingMarkers() {
-      const records = JSON.parse(localStorage.getItem("rr_records") || "[]");
-      records.forEach(rec => {
-        addMarkerToMap(rec.lat, rec.lng, rec.author, rec.text, rec.image);
-      });
+      alert("기록이 저장되었습니다!");
+      location.reload();
     }
   </script>
+  <style>
+    body, html { margin: 0; padding: 0; height: 100%; font-family: sans-serif; }
+    #map { height: 80vh; }
+    .form { padding: 10px; }
+    input, textarea { width: 100%; margin-bottom: 10px; padding: 8px; }
+    button { padding: 10px; width: 100%; }
+  </style>
+</head>
+<body>
+  <h1>RR : 이동하는 기록자들</h1>
+  <div id="map"></div>
+  <div class="form">
+    <input id="record-lat" type="number" step="any" placeholder="위도(latitude)">
+    <input id="record-lng" type="number" step="any" placeholder="경도(longitude)">
+    <input id="record-author" type="text" placeholder="작성자">
+    <textarea id="record-text" placeholder="기록 내용"></textarea>
+    <button onclick="saveRecord()">기록 저장</button>
+  </div>
 </body>
 </html>
