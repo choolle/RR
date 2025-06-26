@@ -1,11 +1,10 @@
 const firebaseConfig = {
-  apiKey: "AIzaSyDra5G2BsIKm3UdP4uLO0mq46UY5fGKAPU",
-  authDomain: "rolling-records-90b45.firebaseapp.com",
-  projectId: "rolling-records-90b45",
-  storageBucket: "rolling-records-90b45.firebasestorage.app",
-  messagingSenderId: "693337006685",
-  appId: "1:693337006685:web:ce13aac3dedf5a7f56a3b4",
-  measurementId: "G-3GZ477R8DV"
+  apiKey: "YOUR_FIREBASE_API_KEY",
+  authDomain: "your-project-id.firebaseapp.com",
+  projectId: "your-project-id",
+  storageBucket: "your-project-id.appspot.com",
+  messagingSenderId: "YOUR_SENDER_ID",
+  appId: "YOUR_APP_ID"
 };
 
 firebase.initializeApp(firebaseConfig);
