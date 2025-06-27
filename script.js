@@ -64,24 +64,29 @@ document.getElementById("recordForm").addEventListener("submit", async (e) => {
 });
 
 async function loadMarkers() {
-  const snapshot = await db.collection("records").orderBy("timestamp", "desc").get();
+  const snapshot = await db.collection("records")
+    .where("lat", "!=", null)
+    .get();
+
   snapshot.forEach((doc) => {
     const data = doc.data();
-    const marker = new google.maps.Marker({
-      position: { lat: data.lat, lng: data.lng },
-      map: map,
-      title: data.author
-    });
+    if (typeof data.lat === "number" && typeof data.lng === "number") {
+      const marker = new google.maps.Marker({
+        position: { lat: data.lat, lng: data.lng },
+        map: map,
+        title: data.author
+      });
 
-    const content = `
-      <strong>${data.author}</strong><br/>
-      ${data.memo.replace(/\n/g, "<br/>")}<br/>
-      ${data.photoURL ? `<img src="${data.photoURL}" width="150"/>` : ""}
-    `;
-    const info = new google.maps.InfoWindow({ content });
+      const content = `
+        <strong>${data.author}</strong><br/>
+        ${data.memo.replace(/\n/g, "<br/>")}<br/>
+        ${data.photoURL ? `<img src="${data.photoURL}" width="150"/>` : ""}
+      `;
+      const info = new google.maps.InfoWindow({ content });
 
-    marker.addListener("click", () => {
-      info.open(map, marker);
-    });
+      marker.addListener("click", () => {
+        info.open(map, marker);
+      });
+    }
   });
 }
