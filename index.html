@@ -1,58 +1,55 @@
+
 <!DOCTYPE html>
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
-  <title>이동하는 기록자들</title>
+  <title>RR: 이동하는 기록자들</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
     body {
       margin: 0;
       font-family: sans-serif;
       display: flex;
-      flex-direction: row;
-      min-height: 100vh;
     }
-
     nav {
-      width: 180px;
       background-color: #333;
       color: white;
-      padding: 20px 10px;
+      padding: 10px;
+      width: 120px;
+      height: 100vh;
       display: flex;
       flex-direction: column;
       gap: 10px;
     }
-
     nav button {
       background: none;
       border: none;
       color: white;
-      font-size: 16px;
+      font-size: 14px;
       text-align: left;
       cursor: pointer;
     }
-
     main {
       flex-grow: 1;
-      display: flex;
-      flex-direction: column;
+      height: 100vh;
+      overflow: auto;
+      position: relative;
     }
-
     section {
-      padding: 20px;
-      flex-grow: 1;
+      padding: 10px;
     }
-
     section:not(.active) {
       display: none;
     }
-
     #map {
       width: 100%;
       height: 90vh;
     }
-
     footer {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
       text-align: center;
       font-size: 10px;
       color: black;
@@ -67,7 +64,6 @@
     <button data-target="listSection">리스트 보기</button>
     <button data-target="aboutSection">우리는?</button>
   </nav>
-
   <main>
     <section id="mapSection" class="active">
       <div id="map"></div>
@@ -86,80 +82,33 @@
     </section>
 
     <section id="listSection">
-      <div id="recordList"></div>
+      <ul id="recordList"></ul>
     </section>
 
     <section id="aboutSection">
-      <div id="aboutContent"></div>
-      <br />
-      <button onclick="editAbout()">내용 수정</button>
+      <div id="aboutContent">
+        <p>우리 그룹에 대한 설명이 여기에 들어갑니다.</p>
+        <form id="aboutForm" style="display: none;">
+          <textarea id="aboutText" rows="10" cols="50"></textarea><br />
+          <label>관리자 암호: <input type="password" id="aboutPassword" /></label>
+          <button type="submit">저장</button>
+        </form>
+        <button id="editAboutBtn">수정</button>
+      </div>
     </section>
 
     <footer>RR @ 2025</footer>
   </main>
 
-  <script
-    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDra5G2BsIKm3UdP4uLO0mq46UY5fGKAPU&callback=initMap"
-    async defer
-  ></script>
+  <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-storage.js"></script>
+
+  <!-- Google Maps API -->
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDra5G2BsIKm3UdP4uLO0mq46UY5fGKAPU&callback=initMap" async defer></script>
+
+  <!-- Custom Script -->
   <script src="script.js"></script>
-
-  <script>
-    document.querySelectorAll("nav button").forEach((btn) => {
-      const target = btn.getAttribute("data-target");
-      btn.addEventListener("click", () => {
-        document.querySelectorAll("section").forEach((sec) => sec.classList.remove("active"));
-        document.getElementById(target).classList.add("active");
-
-        if (target === "mapSection") location.reload();
-        if (target === "listSection") loadList();
-        if (target === "aboutSection") loadAbout();
-      });
-    });
-
-    function loadList() {
-      const listContainer = document.getElementById("recordList");
-      listContainer.innerHTML = "<p>불러오는 중...</p>";
-      db.collection("records").orderBy("timestamp", "desc").get().then(snapshot => {
-        if (snapshot.empty) return listContainer.innerHTML = "<p>기록이 없습니다.</p>";
-        const items = [];
-        snapshot.forEach(doc => {
-          const data = doc.data();
-          items.push(\`
-            <div style="border-bottom:1px solid #ccc; margin-bottom:10px; padding:10px;">
-              <strong>\${data.author}</strong><br/>
-              위도: \${data.lat}, 경도: \${data.lng}<br/>
-              메모: \${data.memo.replace(/\n/g, "<br/>")}<br/>
-              \${data.photoURL ? `<img src="\${data.photoURL}" width="150"/>` : ""}
-            </div>\`);
-        });
-        listContainer.innerHTML = items.join("");
-      });
-    }
-
-    function loadAbout() {
-      const box = document.getElementById("aboutContent");
-      db.collection("about").doc("intro").get().then(doc => {
-        const data = doc.data();
-        box.innerHTML = data?.text?.replace(/\n/g, "<br/>") || "소개 내용이 없습니다.";
-      });
-    }
-
-    function editAbout() {
-      const pwd = prompt("관리자 암호를 입력하세요:");
-      if (pwd !== "okayokay") return alert("암호가 틀렸습니다.");
-
-      const newText = prompt("새로운 소개 내용을 입력하세요:");
-      if (!newText) return;
-
-      db.collection("about").doc("intro").set({ text: newText }).then(() => {
-        alert("소개 내용이 수정되었습니다.");
-        loadAbout();
-      });
-    }
-  </script>
 </body>
 </html>
