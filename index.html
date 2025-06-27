@@ -1,89 +1,50 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html>
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Rolling Records Club</title>
+  <title>Rolling Records</title>
   <style>
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      display: flex;
-    }
-    nav {
-      width: 150px;
-      background-color: #333;
-      color: white;
-      padding: 10px;
-      box-sizing: border-box;
-      height: 100vh;
-    }
-    nav a {
-      color: white;
-      display: block;
-      margin: 10px 0;
-      text-decoration: none;
-    }
-    #content {
-      flex: 1;
-      height: 100vh;
-    }
-    #map {
-      width: 100%;
-      height: 100%;
-    }
-    footer {
-      position: fixed;
-      bottom: 2px;
-      left: 0;
-      right: 0;
-      text-align: center;
-      font-size: 10px;
-      color: black;
-    }
+    body { margin: 0; font-family: sans-serif; display: flex; height: 100vh; }
+    nav { background: #333; color: white; width: 120px; padding: 10px; box-sizing: border-box; display: flex; flex-direction: column; }
+    nav a { color: white; margin: 10px 0; text-decoration: none; font-size: 13px; }
+    #content { flex-grow: 1; padding: 0; position: relative; }
+    #map { width: 100%; height: 100%; }
+    #footer { position: absolute; bottom: 5px; left: 10px; font-size: 10px; color: black; }
   </style>
 </head>
 <body>
   <nav>
-    <a href="#" onclick="showPage('map')">지도 보기</a>
-    <a href="#" onclick="showPage('form')">기록 남기기</a>
-    <a href="#" onclick="showPage('list')">리스트 보기</a>
-    <a href="#" onclick="showPage('about')">우리는?</a>
+    <a href="#" onclick="switchView('map')">지도 보기</a>
+    <a href="#" onclick="switchView('form')">기록 남기기</a>
+    <a href="#" onclick="switchView('list')">리스트 보기</a>
+    <a href="#" onclick="switchView('about')">우리는?</a>
   </nav>
   <div id="content">
-    <div id="map"></div>
-    <div id="form" style="display:none;">
+    <div id="map" style="display:block;"></div>
+    <div id="formContainer" style="display:none; padding:20px;">
       <form id="recordForm">
-        <input type="text" id="author" placeholder="작성자" required/><br/>
+        <input type="text" id="author" placeholder="작성자" required /><br/>
         <textarea id="memo" placeholder="메모" required></textarea><br/>
-        <input type="file" id="photo" accept="image/*"/><br/>
-        <input type="text" id="lat" placeholder="위도" required/>
-        <input type="text" id="lng" placeholder="경도" required/><br/>
-        <input type="password" id="password" placeholder="관리자 암호"/><br/>
-        <button type="submit">저장</button>
+        <input type="file" id="photo" accept="image/*" /><br/>
+        <input type="text" id="lat" placeholder="위도" required readonly />
+        <input type="text" id="lng" placeholder="경도" required readonly /><br/>
+        <input type="password" id="password" placeholder="관리자 암호" required />
+        <button type="submit">기록 저장</button>
       </form>
     </div>
-    <div id="list" style="display:none;">
-      <ul id="recordList"></ul>
-    </div>
-    <div id="about" style="display:none;">
+    <div id="listContainer" style="display:none; padding:20px;"></div>
+    <div id="aboutContainer" style="display:none; padding:20px;">
       <div id="aboutContent"></div>
-      <form id="aboutForm" style="margin-top:10px;">
-        <textarea id="aboutText" rows="4" placeholder="우리 소개글 작성"></textarea><br/>
-        <input type="password" id="aboutPassword" placeholder="관리자 암호"/><br/>
-        <button type="submit">저장</button>
-      </form>
+      <button onclick="editAbout()">관리자 수정</button>
     </div>
+    <div id="footer">RR @ 2025</div>
   </div>
-  <footer>RR @ 2025</footer>
-
-  <!-- Firebase SDKs -->
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
-  <!-- Google Maps -->
-  <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDra5G2BsIKm3UdP4uLO0mq46UY5fGKAPU&callback=initMap"></script>
-  <!-- Main Script -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
   <script src="script.js"></script>
+  <script async defer
+    src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&callback=initMap">
+  </script>
 </body>
 </html>
