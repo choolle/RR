@@ -1,10 +1,11 @@
+
 const firebaseConfig = {
   apiKey: "AIzaSyDra5G2BsIKm3UdP4uLO0mq46UY5fGKAPU",
   authDomain: "rolling-records-90b45.firebaseapp.com",
   projectId: "rolling-records-90b45",
-  storageBucket: "rolling-records-90b45.firebasestorage.app",
+  storageBucket: "rolling-records-90b45.appspot.com",
   messagingSenderId: "693337006685",
-  appId: "1:693337006685:web:ce13aac3dedf5a7f56a3b4",
+  appId: "1:693337006685:web:ce13aac3dedf5a7f56a3b4"
 };
 
 firebase.initializeApp(firebaseConfig);
@@ -17,7 +18,8 @@ function initMap() {
     center: { lat: 37.5665, lng: 126.9780 },
     zoom: 2,
     gestureHandling: "greedy",
-    zoomControl: true
+    zoomControl: true,
+    scrollwheel: true
   });
 
   map.addListener("click", (event) => {
@@ -27,6 +29,51 @@ function initMap() {
 
   loadMarkers();
 }
+
+async function loadMarkers() {
+  const snapshot = await db.collection("records").orderBy("timestamp", "desc").get();
+  snapshot.forEach((doc) => {
+    const data = doc.data();
+    const marker = new google.maps.Marker({
+      position: { lat: data.lat, lng: data.lng },
+      map: map,
+      title: data.author
+    });
+
+    const content = document.createElement("div");
+    content.innerHTML = `
+      <strong>${data.author}</strong><br/>
+      ${data.memo.replace(/\n/g, "<br/>")}<br/>
+      ${data.photoURL ? `<img src="${data.photoURL}" width="150"/><br/>` : ""}
+      <button onclick="adminPrompt('${doc.id}')">admin</button>
+    `;
+    const info = new google.maps.InfoWindow({ content });
+    marker.addListener("click", () => info.open(map, marker));
+  });
+}
+
+async function adminPrompt(docId) {
+  const pw = prompt("암호를 입력하세요:");
+  if (pw === "okayokay") {
+    if (confirm("정말 삭제할까요?")) {
+      await db.collection("records").doc(docId).delete();
+      alert("삭제되었습니다.");
+      location.reload();
+    }
+  } else {
+    alert("암호가 틀렸습니다.");
+  }
+}
+
+document.querySelectorAll("nav button").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll("main section").forEach((sec) => sec.classList.remove("active"));
+    document.getElementById(btn.dataset.target).classList.add("active");
+    if (btn.dataset.target === "mapSection") location.reload();
+    if (btn.dataset.target === "listSection") loadList();
+    if (btn.dataset.target === "aboutSection") loadAbout();
+  });
+});
 
 document.getElementById("recordForm").addEventListener("submit", async (e) => {
   e.preventDefault();
@@ -45,7 +92,7 @@ document.getElementById("recordForm").addEventListener("submit", async (e) => {
   try {
     let photoURL = "";
     if (photo) {
-      const storageRef = storage.ref().child(`photos/${Date.now()}_${photo.name}`);
+      const storageRef = storage.ref().child(\`photos/\${Date.now()}_\${photo.name}\`);
       await storageRef.put(photo);
       photoURL = await storageRef.getDownloadURL();
     }
@@ -57,86 +104,45 @@ document.getElementById("recordForm").addEventListener("submit", async (e) => {
 
     alert("기록이 저장되었습니다!");
     document.getElementById("recordForm").reset();
-    loadMarkers();
+    location.reload();
   } catch (err) {
     console.error("저장 실패:", err);
-    alert("에러가 발생했습니다. 콘솔을 확인해주세요.");
+    alert("에러가 발생했습니다.");
   }
 });
 
-async function loadMarkers() {
-  const snapshot = await db.collection("records")
-    .where("lat", "!=", null)
-    .get();
-
-  const bounds = new google.maps.LatLngBounds();
-
+async function loadList() {
+  const list = document.getElementById("recordList");
+  list.innerHTML = "";
+  const snapshot = await db.collection("records").orderBy("timestamp", "desc").get();
   snapshot.forEach((doc) => {
     const data = doc.data();
-    if (typeof data.lat === "number" && typeof data.lng === "number") {
-      const position = { lat: data.lat, lng: data.lng };
-      const docId = doc.id;
-
-      const marker = new google.maps.Marker({
-        position,
-        map: map,
-        title: data.author
-      });
-
-      const content = `
-        <strong>${data.author}</strong><br/>
-        ${data.memo.replace(/\n/g, "<br/>")}<br/>
-        ${data.photoURL ? `<img src="${data.photoURL}" width="150"/><br/>` : ""}
-        <a href="#" onclick="adminAction('${docId}', '${data.memo.replace(/'/g, "\\'")}')">[admin]</a>
-      `;
-
-      const info = new google.maps.InfoWindow({ content });
-
-      marker.addListener("click", () => {
-        info.open(map, marker);
-      });
-
-      bounds.extend(position);
-    }
+    const item = document.createElement("li");
+    item.innerHTML = \`
+      <strong>\${data.author}</strong> - (\${data.lat}, \${data.lng})<br/>
+      \${data.memo.replace(/\n/g, "<br/>")}
+      \${data.photoURL ? \`<br/><img src="\${data.photoURL}" width="100"/>\` : ""}
+      <hr/>
+    \`;
+    list.appendChild(item);
   });
-
-  if (!snapshot.empty) {
-    map.fitBounds(bounds);
-  }
 }
 
-async function adminAction(docId, currentMemo) {
-  const input = prompt("관리자 암호를 입력하세요:");
-  if (input !== "okayokay") {
+async function loadAbout() {
+  const doc = await db.collection("about").doc("main").get();
+  const content = doc.exists ? doc.data().text : "작성된 설명이 없습니다.";
+  document.getElementById("aboutContent").innerHTML = content.replace(/\n/g, "<br/>");
+}
+
+document.getElementById("aboutForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const text = document.getElementById("aboutText").value;
+  const pw = document.getElementById("aboutPassword").value;
+  if (pw !== "okayokay") {
     alert("암호가 틀렸습니다.");
     return;
   }
-
-  const action = prompt("삭제하려면 '삭제', 수정하려면 '수정'을 입력하세요:");
-  if (action === "삭제") {
-    try {
-      await db.collection("records").doc(docId).delete();
-      alert("기록이 삭제되었습니다.");
-      loadMarkers();
-    } catch (err) {
-      console.error("삭제 실패:", err);
-      alert("삭제 중 오류가 발생했습니다.");
-    }
-  } else if (action === "수정") {
-    const newMemo = prompt("새 메모 내용을 입력하세요:", currentMemo);
-    if (newMemo && newMemo !== currentMemo) {
-      try {
-        await db.collection("records").doc(docId).update({ memo: newMemo });
-        alert("메모가 수정되었습니다.");
-        loadMarkers();
-      } catch (err) {
-        console.error("수정 실패:", err);
-        alert("수정 중 오류가 발생했습니다.");
-      }
-    } else {
-      alert("변경 내용이 없습니다.");
-    }
-  } else {
-    alert("올바른 명령이 아닙니다.");
-  }
-}
+  await db.collection("about").doc("main").set({ text });
+  alert("저장되었습니다.");
+  loadAbout();
+});
