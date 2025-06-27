@@ -87,8 +87,9 @@ async function loadMarkers() {
         <strong>${data.author}</strong><br/>
         ${data.memo.replace(/\n/g, "<br/>")}<br/>
         ${data.photoURL ? `<img src="${data.photoURL}" width="150"/><br/>` : ""}
-        <button onclick="deleteRecord('${docId}')">삭제</button>
+        <a href="#" onclick="adminAction('${docId}', '${data.memo.replace(/'/g, "\\'")}')">[admin]</a>
       `;
+
       const info = new google.maps.InfoWindow({ content });
 
       marker.addListener("click", () => {
@@ -104,19 +105,38 @@ async function loadMarkers() {
   }
 }
 
-async function deleteRecord(docId) {
+async function adminAction(docId, currentMemo) {
   const input = prompt("관리자 암호를 입력하세요:");
   if (input !== "okayokay") {
     alert("암호가 틀렸습니다.");
     return;
   }
 
-  try {
-    await db.collection("records").doc(docId).delete();
-    alert("기록이 삭제되었습니다.");
-    loadMarkers();
-  } catch (err) {
-    console.error("삭제 실패:", err);
-    alert("삭제 중 오류가 발생했습니다.");
+  const action = prompt("삭제하려면 '삭제', 수정하려면 '수정'을 입력하세요:");
+  if (action === "삭제") {
+    try {
+      await db.collection("records").doc(docId).delete();
+      alert("기록이 삭제되었습니다.");
+      loadMarkers();
+    } catch (err) {
+      console.error("삭제 실패:", err);
+      alert("삭제 중 오류가 발생했습니다.");
+    }
+  } else if (action === "수정") {
+    const newMemo = prompt("새 메모 내용을 입력하세요:", currentMemo);
+    if (newMemo && newMemo !== currentMemo) {
+      try {
+        await db.collection("records").doc(docId).update({ memo: newMemo });
+        alert("메모가 수정되었습니다.");
+        loadMarkers();
+      } catch (err) {
+        console.error("수정 실패:", err);
+        alert("수정 중 오류가 발생했습니다.");
+      }
+    } else {
+      alert("변경 내용이 없습니다.");
+    }
+  } else {
+    alert("올바른 명령이 아닙니다.");
   }
 }
