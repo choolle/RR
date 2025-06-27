@@ -2,49 +2,41 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
-  <title>이동하는 기록자들</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Rolling Records Club</title>
   <style>
     body {
       margin: 0;
-      font-family: sans-serif;
+      font-family: Arial, sans-serif;
       display: flex;
-      height: 100vh;
     }
     nav {
+      width: 150px;
       background-color: #333;
       color: white;
-      padding: 20px 10px;
-      width: 120px;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-    nav button {
-      background: none;
-      border: none;
-      color: white;
-      font-size: 14px;
-      cursor: pointer;
-      text-align: left;
-    }
-    main {
-      flex: 1;
-      position: relative;
-    }
-    section {
-      display: none;
       padding: 10px;
-      height: 100%;
+      box-sizing: border-box;
+      height: 100vh;
     }
-    section.active {
+    nav a {
+      color: white;
       display: block;
+      margin: 10px 0;
+      text-decoration: none;
+    }
+    #content {
+      flex: 1;
+      height: 100vh;
     }
     #map {
       width: 100%;
-      height: calc(100vh - 30px);
+      height: 100%;
     }
     footer {
+      position: fixed;
+      bottom: 2px;
+      left: 0;
+      right: 0;
       text-align: center;
       font-size: 10px;
       color: black;
@@ -53,48 +45,45 @@
 </head>
 <body>
   <nav>
-    <button data-target="mapSection">지도 보기</button>
-    <button data-target="formSection">기록 남기기</button>
-    <button data-target="listSection">리스트 보기</button>
-    <button data-target="aboutSection">우리는?</button>
+    <a href="#" onclick="showPage('map')">지도 보기</a>
+    <a href="#" onclick="showPage('form')">기록 남기기</a>
+    <a href="#" onclick="showPage('list')">리스트 보기</a>
+    <a href="#" onclick="showPage('about')">우리는?</a>
   </nav>
-
-  <main>
-    <section id="mapSection" class="active">
-      <div id="map"></div>
-      <footer>RR @ 2025</footer>
-    </section>
-
-    <section id="formSection">
+  <div id="content">
+    <div id="map"></div>
+    <div id="form" style="display:none;">
       <form id="recordForm">
-        <label>위도: <input type="text" id="lat" required /></label><br />
-        <label>경도: <input type="text" id="lng" required /></label><br />
-        <label>작성자: <input type="text" id="author" required /></label><br />
-        <label>메모: <textarea id="memo" required></textarea></label><br />
-        <label>사진: <input type="file" id="photo" /></label><br />
-        <label>관리자 암호: <input type="password" id="password" required /></label><br />
-        <button type="submit">업로드</button>
-      </form>
-    </section>
-
-    <section id="listSection">
-      <ul id="recordList"></ul>
-    </section>
-
-    <section id="aboutSection">
-      <div id="aboutContent"></div>
-      <form id="aboutForm" style="margin-top:20px;">
-        <textarea id="aboutText" placeholder="설명을 입력하세요..." rows="5" cols="40"></textarea><br />
-        <input type="password" id="aboutPassword" placeholder="관리자 암호"/><br />
+        <input type="text" id="author" placeholder="작성자" required/><br/>
+        <textarea id="memo" placeholder="메모" required></textarea><br/>
+        <input type="file" id="photo" accept="image/*"/><br/>
+        <input type="text" id="lat" placeholder="위도" required/>
+        <input type="text" id="lng" placeholder="경도" required/><br/>
+        <input type="password" id="password" placeholder="관리자 암호"/><br/>
         <button type="submit">저장</button>
       </form>
-    </section>
-  </main>
+    </div>
+    <div id="list" style="display:none;">
+      <ul id="recordList"></ul>
+    </div>
+    <div id="about" style="display:none;">
+      <div id="aboutContent"></div>
+      <form id="aboutForm" style="margin-top:10px;">
+        <textarea id="aboutText" rows="4" placeholder="우리 소개글 작성"></textarea><br/>
+        <input type="password" id="aboutPassword" placeholder="관리자 암호"/><br/>
+        <button type="submit">저장</button>
+      </form>
+    </div>
+  </div>
+  <footer>RR @ 2025</footer>
 
-  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDra5G2BsIKm3UdP4uLO0mq46UY5fGKAPU&callback=initMap" async defer></script>
-  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-storage-compat.js"></script>
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+  <!-- Google Maps -->
+  <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDra5G2BsIKm3UdP4uLO0mq46UY5fGKAPU&callback=initMap"></script>
+  <!-- Main Script -->
   <script src="script.js"></script>
 </body>
 </html>
