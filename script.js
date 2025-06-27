@@ -75,6 +75,7 @@ async function loadMarkers() {
     const data = doc.data();
     if (typeof data.lat === "number" && typeof data.lng === "number") {
       const position = { lat: data.lat, lng: data.lng };
+      const docId = doc.id;
 
       const marker = new google.maps.Marker({
         position,
@@ -85,7 +86,8 @@ async function loadMarkers() {
       const content = `
         <strong>${data.author}</strong><br/>
         ${data.memo.replace(/\n/g, "<br/>")}<br/>
-        ${data.photoURL ? `<img src="${data.photoURL}" width="150"/>` : ""}
+        ${data.photoURL ? `<img src="${data.photoURL}" width="150"/><br/>` : ""}
+        <button onclick="deleteRecord('${docId}')">삭제</button>
       `;
       const info = new google.maps.InfoWindow({ content });
 
@@ -93,11 +95,28 @@ async function loadMarkers() {
         info.open(map, marker);
       });
 
-      bounds.extend(position); // 마커 위치를 범위에 포함
+      bounds.extend(position);
     }
   });
 
   if (!snapshot.empty) {
-    map.fitBounds(bounds); // 마커들을 모두 포함하는 중심과 줌 레벨로 자동 조정
+    map.fitBounds(bounds);
+  }
+}
+
+async function deleteRecord(docId) {
+  const input = prompt("관리자 암호를 입력하세요:");
+  if (input !== "okayokay") {
+    alert("암호가 틀렸습니다.");
+    return;
+  }
+
+  try {
+    await db.collection("records").doc(docId).delete();
+    alert("기록이 삭제되었습니다.");
+    loadMarkers();
+  } catch (err) {
+    console.error("삭제 실패:", err);
+    alert("삭제 중 오류가 발생했습니다.");
   }
 }
