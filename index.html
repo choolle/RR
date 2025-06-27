@@ -1,69 +1,52 @@
-
 <!DOCTYPE html>
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
-  <title>RR: 이동하는 기록자들</title>
+  <title>이동하는 기록자들</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
-    body {
-      margin: 0;
-      font-family: sans-serif;
-      display: flex;
-    }
-    nav {
-      background-color: #333;
-      color: white;
-      padding: 10px;
+    body { margin: 0; font-family: sans-serif; }
+    #sidebar {
       width: 120px;
-      height: 100vh;
+      background: #333;
+      color: white;
+      position: fixed;
+      top: 0; left: 0; bottom: 0;
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      padding: 10px;
     }
-    nav button {
+    #sidebar button {
       background: none;
       border: none;
       color: white;
-      font-size: 14px;
+      margin: 10px 0;
       text-align: left;
       cursor: pointer;
     }
     main {
-      flex-grow: 1;
-      height: 100vh;
-      overflow: auto;
-      position: relative;
+      margin-left: 120px;
+      padding: 20px;
     }
-    section {
-      padding: 10px;
-    }
-    section:not(.active) {
-      display: none;
-    }
-    #map {
-      width: 100%;
-      height: 90vh;
-    }
+    section { display: none; }
+    section.active { display: block; }
+    #map { width: 100%; height: 80vh; }
     footer {
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      width: 100%;
       text-align: center;
       font-size: 10px;
       color: black;
-      padding: 5px;
+      margin-top: 40px;
     }
   </style>
 </head>
 <body>
-  <nav>
+  <div id="sidebar">
     <button data-target="mapSection">지도 보기</button>
     <button data-target="formSection">기록 남기기</button>
     <button data-target="listSection">리스트 보기</button>
     <button data-target="aboutSection">우리는?</button>
-  </nav>
+  </div>
+
   <main>
     <section id="mapSection" class="active">
       <div id="map"></div>
@@ -71,44 +54,33 @@
 
     <section id="formSection">
       <form id="recordForm">
-        <label>위도: <input type="text" id="lat" required /></label><br />
-        <label>경도: <input type="text" id="lng" required /></label><br />
-        <label>작성자: <input type="text" id="author" required /></label><br />
-        <label>메모: <textarea id="memo" required></textarea></label><br />
-        <label>사진: <input type="file" id="photo" /></label><br />
-        <label>관리자 암호: <input type="password" id="password" required /></label><br />
+        <input type="text" id="lat" placeholder="위도" required /><br />
+        <input type="text" id="lng" placeholder="경도" required /><br />
+        <input type="text" id="author" placeholder="작성자" required /><br />
+        <textarea id="memo" placeholder="메모" required></textarea><br />
+        <input type="file" id="photo" /><br />
+        <input type="password" id="password" placeholder="관리자 암호" required /><br />
         <button type="submit">업로드</button>
       </form>
     </section>
 
-    <section id="listSection">
-      <ul id="recordList"></ul>
-    </section>
-
+    <section id="listSection"></section>
     <section id="aboutSection">
-      <div id="aboutContent">
-        <p>우리 그룹에 대한 설명이 여기에 들어갑니다.</p>
-        <form id="aboutForm" style="display: none;">
-          <textarea id="aboutText" rows="10" cols="50"></textarea><br />
-          <label>관리자 암호: <input type="password" id="aboutPassword" /></label>
-          <button type="submit">저장</button>
-        </form>
-        <button id="editAboutBtn">수정</button>
-      </div>
+      <div id="aboutContent"></div>
+      <form id="aboutForm" style="display:none;">
+        <textarea id="aboutText" rows="10" cols="40" placeholder="우리는... 내용 작성"></textarea><br/>
+        <input type="password" id="aboutPassword" placeholder="관리자 암호" />
+        <button type="submit">저장</button>
+      </form>
     </section>
 
     <footer>RR @ 2025</footer>
   </main>
 
-  <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-storage.js"></script>
-
-  <!-- Google Maps API -->
-  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDra5G2BsIKm3UdP4uLO0mq46UY5fGKAPU&callback=initMap" async defer></script>
-
-  <!-- Custom Script -->
   <script src="script.js"></script>
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDra5G2BsIKm3UdP4uLO0mq46UY5fGKAPU&callback=initMap" async defer></script>
 </body>
 </html>
