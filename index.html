@@ -1,28 +1,100 @@
 <!DOCTYPE html>
-<html>
+<html lang="ko">
 <head>
-  <meta charset="utf-8" />
-  <title>RR 프로젝트</title>
+  <meta charset="UTF-8" />
+  <title>이동하는 기록자들</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
-    body { margin: 0; font-family: sans-serif; }
-    #map { width: 100vw; height: 100vh; }
+    body {
+      margin: 0;
+      font-family: sans-serif;
+      display: flex;
+      height: 100vh;
+    }
+    nav {
+      background-color: #333;
+      color: white;
+      padding: 20px 10px;
+      width: 120px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    nav button {
+      background: none;
+      border: none;
+      color: white;
+      font-size: 14px;
+      cursor: pointer;
+      text-align: left;
+    }
+    main {
+      flex: 1;
+      position: relative;
+    }
+    section {
+      display: none;
+      padding: 10px;
+      height: 100%;
+    }
+    section.active {
+      display: block;
+    }
+    #map {
+      width: 100%;
+      height: calc(100vh - 30px);
+    }
+    footer {
+      text-align: center;
+      font-size: 10px;
+      color: black;
+    }
   </style>
 </head>
 <body>
-  <div id="map"></div>
+  <nav>
+    <button data-target="mapSection">지도 보기</button>
+    <button data-target="formSection">기록 남기기</button>
+    <button data-target="listSection">리스트 보기</button>
+    <button data-target="aboutSection">우리는?</button>
+  </nav>
 
-  <!-- Firebase SDKs -->
-  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-storage.js"></script>
+  <main>
+    <section id="mapSection" class="active">
+      <div id="map"></div>
+      <footer>RR @ 2025</footer>
+    </section>
 
-  <!-- Script -->
+    <section id="formSection">
+      <form id="recordForm">
+        <label>위도: <input type="text" id="lat" required /></label><br />
+        <label>경도: <input type="text" id="lng" required /></label><br />
+        <label>작성자: <input type="text" id="author" required /></label><br />
+        <label>메모: <textarea id="memo" required></textarea></label><br />
+        <label>사진: <input type="file" id="photo" /></label><br />
+        <label>관리자 암호: <input type="password" id="password" required /></label><br />
+        <button type="submit">업로드</button>
+      </form>
+    </section>
+
+    <section id="listSection">
+      <ul id="recordList"></ul>
+    </section>
+
+    <section id="aboutSection">
+      <div id="aboutContent"></div>
+      <form id="aboutForm" style="margin-top:20px;">
+        <textarea id="aboutText" placeholder="설명을 입력하세요..." rows="5" cols="40"></textarea><br />
+        <input type="password" id="aboutPassword" placeholder="관리자 암호"/><br />
+        <button type="submit">저장</button>
+      </form>
+    </section>
+  </main>
+
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDra5G2BsIKm3UdP4uLO0mq46UY5fGKAPU&callback=initMap" async defer></script>
+  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-storage-compat.js"></script>
   <script src="script.js"></script>
-
-  <!-- Google Maps API -->
-  <script
-    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDra5G2BsIKm3UdP4uLO0mq46UY5fGKAPU&callback=initMap"
-    async defer>
-  </script>
 </body>
 </html>
