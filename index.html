@@ -8,30 +8,55 @@
     body {
       margin: 0;
       font-family: sans-serif;
+      display: flex;
+      flex-direction: row;
+      min-height: 100vh;
     }
+
     nav {
+      width: 180px;
       background-color: #333;
       color: white;
-      padding: 10px;
+      padding: 20px 10px;
       display: flex;
+      flex-direction: column;
       gap: 10px;
     }
+
     nav button {
       background: none;
       border: none;
       color: white;
       font-size: 16px;
+      text-align: left;
       cursor: pointer;
     }
+
+    main {
+      flex-grow: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
     section {
       padding: 20px;
+      flex-grow: 1;
     }
+
     section:not(.active) {
       display: none;
     }
+
     #map {
       width: 100%;
       height: 90vh;
+    }
+
+    footer {
+      text-align: center;
+      font-size: 10px;
+      color: black;
+      padding: 5px;
     }
   </style>
 </head>
@@ -39,6 +64,8 @@
   <nav>
     <button data-target="mapSection">지도 보기</button>
     <button data-target="formSection">기록 남기기</button>
+    <button data-target="listSection">리스트 보기</button>
+    <button data-target="aboutSection">우리는?</button>
   </nav>
 
   <main>
@@ -57,12 +84,23 @@
         <button type="submit">업로드</button>
       </form>
     </section>
+
+    <section id="listSection">
+      <div id="recordList"></div>
+    </section>
+
+    <section id="aboutSection">
+      <div id="aboutContent"></div>
+      <br />
+      <button onclick="editAbout()">내용 수정</button>
+    </section>
+
+    <footer>RR @ 2025</footer>
   </main>
 
   <script
     src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDra5G2BsIKm3UdP4uLO0mq46UY5fGKAPU&callback=initMap"
-    async
-    defer
+    async defer
   ></script>
   <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js"></script>
@@ -71,14 +109,57 @@
 
   <script>
     document.querySelectorAll("nav button").forEach((btn) => {
+      const target = btn.getAttribute("data-target");
       btn.addEventListener("click", () => {
-        document.querySelectorAll("section").forEach((sec) =>
-          sec.classList.remove("active")
-        );
-        const target = btn.getAttribute("data-target");
+        document.querySelectorAll("section").forEach((sec) => sec.classList.remove("active"));
         document.getElementById(target).classList.add("active");
+
+        if (target === "mapSection") location.reload();
+        if (target === "listSection") loadList();
+        if (target === "aboutSection") loadAbout();
       });
     });
+
+    function loadList() {
+      const listContainer = document.getElementById("recordList");
+      listContainer.innerHTML = "<p>불러오는 중...</p>";
+      db.collection("records").orderBy("timestamp", "desc").get().then(snapshot => {
+        if (snapshot.empty) return listContainer.innerHTML = "<p>기록이 없습니다.</p>";
+        const items = [];
+        snapshot.forEach(doc => {
+          const data = doc.data();
+          items.push(\`
+            <div style="border-bottom:1px solid #ccc; margin-bottom:10px; padding:10px;">
+              <strong>\${data.author}</strong><br/>
+              위도: \${data.lat}, 경도: \${data.lng}<br/>
+              메모: \${data.memo.replace(/\n/g, "<br/>")}<br/>
+              \${data.photoURL ? `<img src="\${data.photoURL}" width="150"/>` : ""}
+            </div>\`);
+        });
+        listContainer.innerHTML = items.join("");
+      });
+    }
+
+    function loadAbout() {
+      const box = document.getElementById("aboutContent");
+      db.collection("about").doc("intro").get().then(doc => {
+        const data = doc.data();
+        box.innerHTML = data?.text?.replace(/\n/g, "<br/>") || "소개 내용이 없습니다.";
+      });
+    }
+
+    function editAbout() {
+      const pwd = prompt("관리자 암호를 입력하세요:");
+      if (pwd !== "okayokay") return alert("암호가 틀렸습니다.");
+
+      const newText = prompt("새로운 소개 내용을 입력하세요:");
+      if (!newText) return;
+
+      db.collection("about").doc("intro").set({ text: newText }).then(() => {
+        alert("소개 내용이 수정되었습니다.");
+        loadAbout();
+      });
+    }
   </script>
 </body>
 </html>
