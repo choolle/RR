@@ -45,6 +45,7 @@
     <section id="mapSection" class="active">
       <div id="map"></div>
     </section>
+
     <section id="formSection">
       <form id="recordForm">
         <label>위도: <input type="text" id="lat" required /></label><br />
@@ -58,7 +59,16 @@
     </section>
   </main>
 
-  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCqG7xxG2-xDW1u84zPK46ZIsDtnoW0JBA&callback=initMap" async defer></script>
+  <script
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDra5G2BsIKm3UdP4uLO0mq46UY5fGKAPU&callback=initMap"
+    async
+    defer
+  ></script>
+  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-storage.js"></script>
+  <script src="script.js"></script>
+
   <script>
     document.querySelectorAll("nav button").forEach((btn) => {
       btn.addEventListener("click", () => {
@@ -69,25 +79,6 @@
         document.getElementById(target).classList.add("active");
       });
     });
-
-    
-    function initMap() {
-      map = new google.maps.Map(document.getElementById("map"), {
-        center: { lat: 37.5665, lng: 126.978 },
-        zoom: 2,
-        gestureHandling: "greedy",
-      });
-
-      map.addListener("click", (event) => {
-        document.getElementById("lat").value = event.latLng.lat().toFixed(6);
-        document.getElementById("lng").value = event.latLng.lng().toFixed(6);
-      });
-    }
   </script>
-
-  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-storage-compat.js"></script>
-  <script src="script.js"></script>
 </body>
 </html>
