@@ -17,6 +17,7 @@ function initMap() {
     center: { lat: 37.5665, lng: 126.9780 },
     zoom: 2,
     gestureHandling: "greedy",
+    zoomControl: true
   });
 
   map.addListener("click", (event) => {
@@ -68,11 +69,15 @@ async function loadMarkers() {
     .where("lat", "!=", null)
     .get();
 
+  const bounds = new google.maps.LatLngBounds();
+
   snapshot.forEach((doc) => {
     const data = doc.data();
     if (typeof data.lat === "number" && typeof data.lng === "number") {
+      const position = { lat: data.lat, lng: data.lng };
+
       const marker = new google.maps.Marker({
-        position: { lat: data.lat, lng: data.lng },
+        position,
         map: map,
         title: data.author
       });
@@ -87,6 +92,12 @@ async function loadMarkers() {
       marker.addListener("click", () => {
         info.open(map, marker);
       });
+
+      bounds.extend(position); // 마커 위치를 범위에 포함
     }
   });
+
+  if (!snapshot.empty) {
+    map.fitBounds(bounds); // 마커들을 모두 포함하는 중심과 줌 레벨로 자동 조정
+  }
 }
